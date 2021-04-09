@@ -135,7 +135,6 @@ fn main() -> Result<()> {
                 .queue(SetBackgroundColor(Color::DarkGrey))?
                 .queue(Print('X'.to_string()))?;
         } else if cursor_moved {
-            //if cursor_moved {
             stdout
                 .queue(SetBackgroundColor(Color::Red))?
                 .queue(Print(' '.to_string()))?;
