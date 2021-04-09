@@ -65,6 +65,10 @@ impl Grid {
     pub fn set_cell(&mut self, x: usize, y: usize, content: bool) {
         self.grid[y][x] = content;
     }
+    /// Get cell at coordinates
+    pub fn get_cell(&self, x: usize, y: usize) -> bool {
+        self.grid[y][x] 
+    }
     /// Returns a tuple with (cell at coords, [array of 8 neighbors row-by-row left-to-right])
     fn self_and_neighbors(&self, x: usize, y: usize) -> (bool, [bool; 8]) {
         let prev_x = Self::decrement_wrap(x, self.width);
@@ -131,3 +135,4 @@ impl Grid {
         Ok(())
     }
 }
+
