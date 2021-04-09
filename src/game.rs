@@ -6,8 +6,8 @@ use crossterm::{
 use num::Integer;
 use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
-use std:: io::Stdout;
 use rayon::prelude::*;
+use std::io::Stdout;
 
 pub struct Grid {
     pub width: usize,
@@ -21,10 +21,16 @@ impl Grid {
         Self {
             width: x,
             height: y,
-            //grid: vec![vec![false; x as usize]; y as usize],
             grid: (0..y)
                 .map(|_| (0..x).map(|_| rng.gen::<bool>()).collect())
                 .collect(),
+        }
+    }
+    pub fn new_empty(x: usize, y: usize) -> Self {
+        Self {
+            width: x,
+            height: y,
+            grid: vec![vec![false; x as usize]; y as usize],
         }
     }
     pub fn new_seeded(x: usize, y: usize, seed: u64) -> Self {
@@ -32,7 +38,6 @@ impl Grid {
         Self {
             width: x,
             height: y,
-            //grid: vec![vec![false; x as usize]; y as usize],
             grid: (0..y)
                 .map(|_| (0..x).map(|_| rng.gen::<bool>()).collect())
                 .collect(),
@@ -50,7 +55,7 @@ impl Grid {
         }
         return i + T::one();
     }
-    pub fn set_cell(&mut self, x: usize, y: usize, content: bool){
+    pub fn set_cell(&mut self, x: usize, y: usize, content: bool) {
         self.grid[y][x] = content;
     }
     fn self_and_neighbors(&self, x: usize, y: usize) -> (bool, [bool; 8]) {
@@ -85,19 +90,17 @@ impl Grid {
     pub fn propogate_par(&mut self, run_rule: &'static (dyn Fn((bool, [bool; 8])) -> bool + Sync)) {
         let mut next_grid: Vec<Vec<bool>> =
             vec![vec![false; self.width as usize]; self.height as usize];
-        next_grid.par_iter_mut().zip(self.grid.par_iter()).enumerate().for_each(|(y, (next_row, cur_row))| {
-            next_row.par_iter_mut().zip(cur_row).enumerate()
-            .for_each(|(x, (next_cell, _))| *next_cell = run_rule(self.self_and_neighbors(x,y)));
-        });
-        self.grid = next_grid;
-    }
-    pub fn propogate_par2(&mut self, run_rule: &'static (dyn Fn((bool, [bool; 8])) -> bool + Sync)) {
-        let mut next_grid: Vec<Vec<bool>> =
-            vec![vec![false; self.width as usize]; self.height as usize];
-        next_grid.par_iter_mut().enumerate().for_each(|(y, next_row)| {
-            next_row.par_iter_mut().enumerate()
-            .for_each(|(x, next_cell)| *next_cell = run_rule(self.self_and_neighbors(x,y)));
-        });
+        next_grid
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(y, next_row)| {
+                next_row
+                    .par_iter_mut()
+                    .enumerate()
+                    .for_each(|(x, next_cell)| {
+                        *next_cell = run_rule(self.self_and_neighbors(x, y))
+                    });
+            });
         self.grid = next_grid;
     }
     pub fn queue_print(&self, stdout: &mut Stdout, cursor_x: u16, cursor_y: u16) -> Result<()> {

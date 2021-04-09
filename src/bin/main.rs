@@ -1,51 +1,61 @@
-use std::io::{Write, stdout};
 use crossterm::event::{
     poll, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, MouseButton,
     MouseEventKind,
 };
 use crossterm::{
     cursor,
-    style::{self, Color, Print, SetBackgroundColor},
-    terminal, ExecutableCommand, QueueableCommand, Result,
+    style::{Color, Print, SetBackgroundColor},
+    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
+    ExecutableCommand, QueueableCommand, Result,
 };
-use std::time::Duration;
 use game_of_life_rs::game::Grid;
+use std::io::{stdout, Write};
+use std::time::Duration;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "game-of-life-rs", about ="A Rust terminal implementation of Conway's Game of Life (with mouse support)")]
+#[structopt(
+    name = "game-of-life-rs",
+    about = "A Rust terminal implementation of Conway's Game of Life (with mouse support)"
+)]
 struct Opt {
     /// Seed (u64) for the initial state random generation. If no seed argument is provided, initial state will be randomized for each run.
     #[structopt(short, long)]
     seed: Option<u64>,
-} 
+
+    /// Option to initialize game grid in empty sandbox mode
+    #[structopt(short, long)]
+    empty: bool,
+
+    /// Delay between each game frame
+    #[structopt(short, long, default_value = "15")]
+    delay: u64,
+}
 
 fn main() -> Result<()> {
     let opt = Opt::from_args();
-    let mut stdout = stdout();
     let (max_x, max_y) = terminal::size()?;
-    let mut screen : Grid = match opt.seed {
+    let mut gamegrid: Grid = match opt.seed {
         Some(seed) => Grid::new_seeded(max_x as usize, max_y as usize, seed),
         None => Grid::new(max_x as usize, max_y as usize),
     };
+    if opt.empty {
+        gamegrid = Grid::new_empty(max_x as usize, max_y as usize);
+    }
+    let mut stdout = stdout();
+    stdout.execute(EnterAlternateScreen)?;
     stdout.execute(cursor::Hide)?;
-    stdout.execute(terminal::Clear(terminal::ClearType::All))?;
     stdout.execute(EnableMouseCapture)?;
     terminal::enable_raw_mode()?;
-    //for y in 5..10 {
-    //    for x in 10..20 {
-    //        screen.grid[y][x] = true;
-    //    }
-    //}
     let mut cursor_x: u16 = 0;
     let mut cursor_y: u16 = 0;
     let mut paused = false;
-    screen.queue_print(&mut stdout, cursor_x, cursor_y)?;
+    gamegrid.queue_print(&mut stdout, cursor_x, cursor_y)?;
     stdout.flush()?;
     loop {
         let mut cursor_moved = false;
         let mut add_cell_here = false;
-        if poll(Duration::from_millis(10))? {
+        if poll(Duration::from_millis(opt.delay))? {
             match read()? {
                 Event::Key(event) => match event.code {
                     KeyCode::Char('q') | KeyCode::Esc => {
@@ -58,19 +68,19 @@ fn main() -> Result<()> {
                         add_cell_here = true;
                     }
                     KeyCode::Right => {
-                        cursor_x = Grid::increment_wrap(cursor_x, screen.width as u16);
+                        cursor_x = Grid::increment_wrap(cursor_x, gamegrid.width as u16);
                         cursor_moved = true;
                     }
                     KeyCode::Left => {
-                        cursor_x = Grid::decrement_wrap(cursor_x, screen.width as u16);
+                        cursor_x = Grid::decrement_wrap(cursor_x, gamegrid.width as u16);
                         cursor_moved = true
                     }
                     KeyCode::Down => {
-                        cursor_y = Grid::increment_wrap(cursor_y, screen.height as u16);
+                        cursor_y = Grid::increment_wrap(cursor_y, gamegrid.height as u16);
                         cursor_moved = true
                     }
                     KeyCode::Up => {
-                        cursor_y = Grid::decrement_wrap(cursor_y, screen.height as u16);
+                        cursor_y = Grid::decrement_wrap(cursor_y, gamegrid.height as u16);
                         cursor_moved = true
                     }
                     _ => (),
@@ -89,7 +99,7 @@ fn main() -> Result<()> {
             }
         }
         if !paused {
-            screen.propogate_par(&|(cell, arr)| {
+            gamegrid.propogate_par(&|(cell, arr)| {
                 let neighbor_count = arr
                     .iter()
                     .fold(0, |acc, item| if *item { acc + 1 } else { acc });
@@ -103,11 +113,11 @@ fn main() -> Result<()> {
             });
         }
         if !paused || cursor_moved {
-            screen.queue_print(&mut stdout, cursor_x, cursor_y)?;
+            gamegrid.queue_print(&mut stdout, cursor_x, cursor_y)?;
         }
         stdout.queue(cursor::MoveTo(cursor_x, cursor_y))?;
         if add_cell_here {
-            screen.set_cell(cursor_x as usize, cursor_y as usize, true);
+            gamegrid.set_cell(cursor_x as usize, cursor_y as usize, true);
             stdout
                 .queue(SetBackgroundColor(Color::DarkGrey))?
                 .queue(Print('X'.to_string()))?;
@@ -121,5 +131,6 @@ fn main() -> Result<()> {
     }
     stdout.execute(terminal::Clear(terminal::ClearType::All))?;
     stdout.execute(DisableMouseCapture)?;
+    stdout.execute(LeaveAlternateScreen)?;
     Ok(())
 }
