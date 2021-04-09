@@ -9,12 +9,14 @@ use rand_chacha::ChaCha20Rng;
 use rayon::prelude::*;
 use std::io::Stdout;
 
+/// Grid object that holds 2D cell on/off matrix
 pub struct Grid {
     pub width: usize,
     pub height: usize,
     grid: Vec<Vec<bool>>,
 }
 impl Grid {
+    /// New grid with randomized initial state
     pub fn new(x: usize, y: usize) -> Self {
         let mut rng = ChaCha20Rng::from_entropy();
 
@@ -26,6 +28,7 @@ impl Grid {
                 .collect(),
         }
     }
+    /// New grid with all cells turned off
     pub fn new_empty(x: usize, y: usize) -> Self {
         Self {
             width: x,
@@ -33,6 +36,7 @@ impl Grid {
             grid: vec![vec![false; x as usize]; y as usize],
         }
     }
+    /// New grid randomized using seed
     pub fn new_seeded(x: usize, y: usize, seed: u64) -> Self {
         let mut rng = ChaCha20Rng::seed_from_u64(seed);
         Self {
@@ -43,21 +47,25 @@ impl Grid {
                 .collect(),
         }
     }
+    /// Decrement with wrap (0 wraps to max)
     pub fn decrement_wrap<T: Integer>(i: T, one_over_max: T) -> T {
         if i == T::zero() {
             return one_over_max - T::one();
         }
         return i - T::one();
     }
+    /// Increment with wrap (max wraps to 0)
     pub fn increment_wrap<T: Integer>(i: T, one_over_max: T) -> T {
         if i == one_over_max - T::one() {
             return T::zero();
         }
         return i + T::one();
     }
+    /// Set cell at coordinates to on or off
     pub fn set_cell(&mut self, x: usize, y: usize, content: bool) {
         self.grid[y][x] = content;
     }
+    /// Returns a tuple with (cell at coords, [array of 8 neighbors row-by-row left-to-right])
     fn self_and_neighbors(&self, x: usize, y: usize) -> (bool, [bool; 8]) {
         let prev_x = Self::decrement_wrap(x, self.width);
         let next_x = Self::increment_wrap(x, self.width);
@@ -77,6 +85,7 @@ impl Grid {
             ],
         )
     }
+    /// Calculate next game frame using the rule function parameter on each cell neighbor group
     pub fn propogate(&mut self, run_rule: &'static (dyn Fn((bool, [bool; 8])) -> bool + Sync)) {
         let mut next_grid: Vec<Vec<bool>> =
             vec![vec![false; self.width as usize]; self.height as usize];
@@ -87,6 +96,7 @@ impl Grid {
         }
         self.grid = next_grid;
     }
+    /// Calculate next game frame in parallel using the rule function parameter on each cell neighbor group
     pub fn propogate_par(&mut self, run_rule: &'static (dyn Fn((bool, [bool; 8])) -> bool + Sync)) {
         let mut next_grid: Vec<Vec<bool>> =
             vec![vec![false; self.width as usize]; self.height as usize];
@@ -103,6 +113,7 @@ impl Grid {
             });
         self.grid = next_grid;
     }
+    /// Queue grid to be printed, stdout will need to be flushed after this to display
     pub fn queue_print(&self, stdout: &mut Stdout, cursor_x: u16, cursor_y: u16) -> Result<()> {
         for y in 0..self.height as u16 {
             for x in 0..self.width as u16 {
