@@ -7,6 +7,7 @@ Conway's Game of Life implemented in Rust for the terminal (including mouse inpu
 -   User can navigate the red cursor with the arrow keys or mouse (if your terminal supports mouse input)
 -   User can flip on cells at the red cursor location using the `Enter` key or the Left mouse button
 -   User can pause the game using the `Space` key, and continue moving the cursor and flipping on cells while game is paused
+-   Exit by pressing `q`
 
 ## Features
 
