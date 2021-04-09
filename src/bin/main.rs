@@ -30,6 +30,25 @@ struct Opt {
     /// Delay between each game frame
     #[structopt(short, long, default_value = "15")]
     delay: u64,
+
+    /// Calculate next game frame in parallel (benchmarks show this is currently slower than the
+    /// default sequential)
+    #[structopt(short, long)]
+    parallel: bool,
+}
+
+fn default_rule(tup: (bool, [bool; 8])) -> bool {
+    let (cell, arr) = tup;
+    let neighbor_count = arr
+        .iter()
+        .fold(0, |acc, item| if *item { acc + 1 } else { acc });
+    if neighbor_count == 3 {
+        return true;
+    }
+    if cell && neighbor_count == 2 {
+        return true;
+    }
+    return false;
 }
 
 fn main() -> Result<()> {
@@ -99,18 +118,10 @@ fn main() -> Result<()> {
             }
         }
         if !paused {
-            gamegrid.propogate_par(&|(cell, arr)| {
-                let neighbor_count = arr
-                    .iter()
-                    .fold(0, |acc, item| if *item { acc + 1 } else { acc });
-                if neighbor_count == 3 {
-                    return true;
-                }
-                if cell && neighbor_count == 2 {
-                    return true;
-                }
-                return false;
-            });
+            match opt.parallel {
+                true => gamegrid.propogate_par(&default_rule),
+                false => gamegrid.propogate(&default_rule),
+            }
         }
         if !paused || cursor_moved {
             gamegrid.queue_print(&mut stdout, cursor_x, cursor_y)?;
@@ -129,7 +140,6 @@ fn main() -> Result<()> {
         }
         stdout.flush()?;
     }
-    stdout.execute(terminal::Clear(terminal::ClearType::All))?;
     stdout.execute(DisableMouseCapture)?;
     stdout.execute(LeaveAlternateScreen)?;
     Ok(())
