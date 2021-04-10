@@ -10,15 +10,28 @@ use crossterm::{
 };
 use std::time::Duration;
 use game_of_life_rs::game::Grid;
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "game-of-life-rs", about ="A Rust terminal implementation of Conway's Game of Life (with mouse support)")]
+struct Opt {
+    /// Seed (u64) for the initial state random generation. If no seed argument is provided, initial state will be randomized for each run.
+    #[structopt(short, long)]
+    seed: Option<u64>,
+} 
 
 fn main() -> Result<()> {
+    let opt = Opt::from_args();
     let mut stdout = stdout();
+    let (max_x, max_y) = terminal::size()?;
+    let mut screen : Grid = match opt.seed {
+        Some(seed) => Grid::new_seeded(max_x as usize, max_y as usize, seed),
+        None => Grid::new(max_x as usize, max_y as usize),
+    };
     stdout.execute(cursor::Hide)?;
     stdout.execute(terminal::Clear(terminal::ClearType::All))?;
     stdout.execute(EnableMouseCapture)?;
     terminal::enable_raw_mode()?;
-    let (max_x, max_y) = terminal::size()?;
-    let mut screen = Grid::new(max_x as usize, max_y as usize);
     //for y in 5..10 {
     //    for x in 10..20 {
     //        screen.grid[y][x] = true;

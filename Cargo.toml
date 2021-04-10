@@ -12,6 +12,7 @@ num = "*"
 rand = "*"
 rand_chacha = "*"
 rayon = "*"
+structopt = "0.3"
 
 [dev-dependencies]
 criterion = "0.3"

@@ -16,9 +16,19 @@ pub struct Grid {
 }
 impl Grid {
     pub fn new(x: usize, y: usize) -> Self {
-        let seed: <ChaCha20Rng as SeedableRng>::Seed = Default::default();
-        let mut rng = ChaCha20Rng::from_seed(seed);
+        let mut rng = ChaCha20Rng::from_entropy();
 
+        Self {
+            width: x,
+            height: y,
+            //grid: vec![vec![false; x as usize]; y as usize],
+            grid: (0..y)
+                .map(|_| (0..x).map(|_| rng.gen::<bool>()).collect())
+                .collect(),
+        }
+    }
+    pub fn new_seeded(x: usize, y: usize, seed: u64) -> Self {
+        let mut rng = ChaCha20Rng::seed_from_u64(seed);
         Self {
             width: x,
             height: y,
