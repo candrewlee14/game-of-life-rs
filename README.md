@@ -1,5 +1,5 @@
 # game-of-life-rs
-Conway's Game of Life implemented in Rust.
+Conway's Game of Life implemented in Rust for the terminal (including mouse input).
 
 ## Controls
 - User can navigate the red cursor with the arrow keys or mouse (if your terminal supports mouse input)
