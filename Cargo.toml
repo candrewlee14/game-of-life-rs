@@ -1,5 +1,5 @@
 [package]
-name = "rust-term-test"
+name = "game-of-life-rs"
 version = "0.1.0"
 authors = ["Andrew Lee <candrewlee14@gmail.com>"]
 edition = "2018"
@@ -7,7 +7,16 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-crossterm = "*"
+crossterm = {version="*", features=["event-stream"]}
 num = "*"
 rand = "*"
 rand_chacha = "*"
+rayon = "*"
+
+[dev-dependencies]
+criterion = "0.3"
+pprof = { version = "0.4", features = ["flamegraph", "criterion"]  }
+
+[[bench]]
+name = "propogate_bench"
+harness = false
