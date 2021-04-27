@@ -19,13 +19,13 @@ fn rule(tup: (bool, [bool; 8])) -> bool {
 fn grid_test_seq(size: usize, reps: usize) {
     let mut screen = Grid::new(size, size);
     for _i in 0..reps {
-        screen.propogate(&rule);
+        screen.propogate(rule);
     }
 }
 fn grid_test_par(size: usize, reps: usize) {
     let mut screen = Grid::new(size, size);
     for _i in 0..reps {
-        screen.propogate_par(&rule);
+        screen.propogate_par(rule);
     }
 }
 

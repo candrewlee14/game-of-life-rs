@@ -12,7 +12,7 @@ mod tests {
         game.set_cell(0, 0, true);
         game.set_cell(1, 0, true);
         game.set_cell(99, 0, true);
-        game.propogate(&default_rule);
+        game.propogate(default_rule);
         assert!(game.get_cell(0, 0) && game.get_cell(0, 1) && game.get_cell(0, 99));
     }
     #[test]
@@ -22,7 +22,7 @@ mod tests {
         game.set_cell(0, 0, true);
         game.set_cell(1, 0, true);
         game.set_cell(99, 0, true);
-        game.propogate_par(&default_rule);
+        game.propogate_par(default_rule);
         assert!(game.get_cell(0, 0) && game.get_cell(0, 1) && game.get_cell(0, 99));
     }
 }

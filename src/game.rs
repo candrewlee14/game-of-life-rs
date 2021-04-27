@@ -8,6 +8,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
 use rayon::prelude::*;
 use std::io::Stdout;
+pub type RuleFunc = fn((bool, [bool; 8]))->bool; 
 
 /// Grid object that holds 2D cell on/off matrix
 pub struct Grid {
@@ -90,7 +91,7 @@ impl Grid {
         )
     }
     /// Calculate next game frame using the rule function parameter on each cell neighbor group
-    pub fn propogate(&mut self, run_rule: &'static (dyn Fn((bool, [bool; 8])) -> bool + Sync)) {
+    pub fn propogate(&mut self, run_rule: RuleFunc) {
         let mut next_grid: Vec<Vec<bool>> =
             vec![vec![false; self.width as usize]; self.height as usize];
         for y in 0..self.height {
@@ -101,7 +102,7 @@ impl Grid {
         self.grid = next_grid;
     }
     /// Calculate next game frame in parallel using the rule function parameter on each cell neighbor group
-    pub fn propogate_par(&mut self, run_rule: &'static (dyn Fn((bool, [bool; 8])) -> bool + Sync)) {
+    pub fn propogate_par(&mut self, run_rule: RuleFunc) {
         let mut next_grid: Vec<Vec<bool>> =
             vec![vec![false; self.width as usize]; self.height as usize];
         next_grid
@@ -128,7 +129,7 @@ impl Grid {
                         .queue(style::SetBackgroundColor(Color::from((
                             color, color, color,
                         ))))?
-                        .queue(Print(' '.to_string()))?;
+                        .queue(Print(" "))?;
                 }
             }
         }

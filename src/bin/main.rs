@@ -107,8 +107,8 @@ fn main() -> Result<()> {
         }
         if !paused {
             match opt.parallel {
-                true => gamegrid.propogate_par(&default_rule),
-                false => gamegrid.propogate(&default_rule),
+                true => gamegrid.propogate_par(default_rule),
+                false => gamegrid.propogate(default_rule),
             }
         }
         if !paused || cursor_moved {
